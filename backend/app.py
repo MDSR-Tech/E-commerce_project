@@ -3,6 +3,7 @@ from .extensions import db, jwt
 from .auth import auth_bp
 from .products import products_bp
 from .cart import carts_bp
+from .orders import orders_bp
 """from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import create_access_token, JWTManager, get_jwt_identity, verify_jwt_in_request
@@ -31,6 +32,9 @@ def create_app():
     if 'carts' not in app.blueprints:
         app.register_blueprint(carts_bp, name=f"carts_{id(app)}")
 
+    if 'orders' not in app.blueprints:
+        app.register_blueprint(orders_bp, name=f"orders_{id(app)}")
+
     """@app.route("/")
     def home():
         return jsonify(message="Hello, Flask!")"""
@@ -39,6 +43,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(products_bp)
     app.register_blueprint(carts_bp)
+    app.register_blueprint(orders_bp)
 
     return app
 

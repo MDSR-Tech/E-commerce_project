@@ -10,7 +10,7 @@ class Customer(db.Model):
     #created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     carts = db.relationship("Cart", back_populates='customer') #one to one relationship between Customers and Carts
-    orders = db.relationship('Order', back_populates='customer') #one to one relationship between Customers and Orders
+    orders = db.relationship('Orders', back_populates='customer') #one to one relationship between Customers and Orders
 
 class Products(db.Model):
     __tablename__ = 'products'
@@ -37,7 +37,7 @@ class CartItems(db.Model):
     cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-
+    product = db.relationship("Products")
     cart = db.relationship("Cart", back_populates="cartitems")
 
 
@@ -46,9 +46,11 @@ class Orders(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
     status = db.Column(db.Boolean, default=True)
-    total_amount = db.Column(db.Double, nullable=False)
+    total_amount = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+    orderitems = db.relationship("OrderItems", back_populates="order")
+    user_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
     customer = db.relationship("Customer", back_populates="orders") # Define the relationship with Customer
 
 
@@ -60,6 +62,7 @@ class OrderItems(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
 
+    product = db.relationship("Products")
     order = db.relationship("Orders", back_populates="orderitems")
 
 
