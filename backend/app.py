@@ -3,7 +3,7 @@ from extensions import db, jwt, cors
 from auth import auth_bp
 from products import products_bp
 from cart import carts_bp
-from orders import orders_bp
+from orders import order_bp
 import os
 from dotenv import load_dotenv
 
@@ -31,7 +31,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(products_bp)
     app.register_blueprint(carts_bp)
-    app.register_blueprint(orders_bp)
+    app.register_blueprint(order_bp)
 
     return app
 

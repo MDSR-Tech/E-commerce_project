@@ -7,17 +7,17 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 
 """
-POST /orders: Create new order from cart
-GET /orders/:id: Fetch order details
-DELETE /orders/:id: Cancel order
+POST /order: Create new order from cart
+GET /order/:id: Fetch order details
+DELETE /order/:id: Cancel order
 """
 
 
-orders_bp = Blueprint("orders", __name__, url_prefix="/orders")
+order_bp = Blueprint("order", __name__, url_prefix="/order")
 
 
 
-@orders_bp.route('', methods=["POST"])
+@order_bp.route('', methods=["POST"])
 def post_user_order():
     if request.method == "POST":
         token = request.headers.get('Authorization')
@@ -35,16 +35,16 @@ def post_user_order():
         except NoAuthorizationError:
             return jsonify({'error': 'Invalid token'}), 401
 
-        user = Customer.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first()
         cart = Cart.query.filter_by(user_id=user.id).first()
 
-        new_order = Orders(user_id=user.id)
+        new_order = Order(user_id=user.id)
         db.session.add(new_order)
         db.session.flush()
 
         order_lists = []
         for item in cart.cartitems:
-            order_list = OrderItems(
+            order_list = OrderItem(
                 order_id = new_order.id,
                 product_id = item.product_id,
                 quantity = item.quantity
@@ -74,7 +74,7 @@ def post_user_order():
 
 
 
-@orders_bp.route('/<int:order_id>', methods=["GET"])
+@order_bp.route('/<int:order_id>', methods=["GET"])
 def get_user_order(order_id):
     if request.method == "GET":
         token = request.headers.get('Authorization')
@@ -92,8 +92,8 @@ def get_user_order(order_id):
         except NoAuthorizationError:
             return jsonify({'error': 'Invalid token'}), 401
 
-        user = Customer.query.filter_by(username=username).first()
-        order = Orders.query.filter_by(id=order_id, user_id=user.id).first()
+        user = User.query.filter_by(username=username).first()
+        order = Order.query.filter_by(id=order_id, user_id=user.id).first()
 
         order_item = [] # Initialize an empty list to hold item data
         for i in order.orderitems:
@@ -109,7 +109,7 @@ def get_user_order(order_id):
 
 
 
-@orders_bp.route('/<int:order_id>', methods=["DELETE"])
+@order_bp.route('/<int:order_id>', methods=["DELETE"])
 def delete_user_order(order_id):
     token = request.headers.get('Authorization')
     if not token:
@@ -127,8 +127,8 @@ def delete_user_order(order_id):
     except NoAuthorizationError:
         return jsonify({'error': 'Invalid token'}), 401
 
-    user = Customer.query.filter_by(username=username).first()
-    order = Orders.query.filter_by(id=order_id, user_id=user.id).first()
+    user = User.query.filter_by(username=username).first()
+    order = Order.query.filter_by(id=order_id, user_id=user.id).first()
 
     if not order:
         return jsonify({'error': 'Order not found'}), 404
