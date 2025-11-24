@@ -1,0 +1,29 @@
+# Backend
+backend/.env
+backend/__pycache__/
+backend/*.pyc
+backend/venv/
+backend/env/
+
+# Frontend
+frontend/mdsrtech/.env.local
+frontend/mdsrtech/.next/
+frontend/mdsrtech/node_modules/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
