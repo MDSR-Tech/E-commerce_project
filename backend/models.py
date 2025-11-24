@@ -1,78 +1,173 @@
-from .extensions import db
+from extensions import db
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
-
-class Customer(db.Model): 
-    __tablename__ = 'customers'
-    id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
-    username = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    #created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
-    carts = db.relationship("Cart", back_populates='customer') #one to one relationship between Customers and Carts
-    orders = db.relationship('Orders', back_populates='customer') #one to one relationship between Customers and Orders
-
-class Products(db.Model):
-    __tablename__ = 'products'
-    id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
-    category_id = db.Column(db.Integer, nullable=False)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    description = db.Column(db.String(200), nullable=False) 
-    price = db.Column(db.Float, nullable=False)
-    stock = db.Column(db.Integer, nullable=False)
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
+    full_name = db.Column(db.Text, nullable=False)
+    role = db.Column(db.String(50), nullable=False, default='customer')
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     
+    # Relationships
+    carts = db.relationship("Cart", back_populates='user', uselist=False)
+    wishlists = db.relationship("Wishlist", back_populates='user', uselist=False)
+    orders = db.relationship('Order', back_populates='user')
+    addresses = db.relationship('Address', back_populates='user')
+
+class Category(db.Model):
+    __tablename__ = 'categories'
+    id = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.Text, unique=True, nullable=False)
+    slug = db.Column(db.Text, unique=True, nullable=False)
+    parent_id = db.Column(db.BigInteger, db.ForeignKey('categories.id'))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    products = db.relationship('Product', back_populates='category')
+
+class Brand(db.Model):
+    __tablename__ = 'brands'
+    id = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.Text, unique=True, nullable=False)
+    slug = db.Column(db.Text, unique=True, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    products = db.relationship('Product', back_populates='brand')
+
+class Product(db.Model):
+    __tablename__ = 'products'
+    id = db.Column(db.BigInteger, primary_key=True)
+    title = db.Column(db.Text, nullable=False)
+    slug = db.Column(db.Text, unique=True, nullable=False)
+    brand_id = db.Column(db.BigInteger, db.ForeignKey('brands.id'))
+    category_id = db.Column(db.BigInteger, db.ForeignKey('categories.id'))
+    description = db.Column(db.Text)
+    price_cents = db.Column(db.Integer, nullable=False)
+    currency = db.Column(db.String(3), nullable=False, default='CAD')
+    stock = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    updated_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    # Relationships
+    brand = db.relationship('Brand', back_populates='products')
+    category = db.relationship('Category', back_populates='products')
+    images = db.relationship('ProductImage', back_populates='product')
+
+class ProductImage(db.Model):
+    __tablename__ = 'product_images'
+    id = db.Column(db.BigInteger, primary_key=True)
+    product_id = db.Column(db.BigInteger, db.ForeignKey('products.id'), nullable=False)
+    url = db.Column(db.Text, nullable=False)  # Changed from image_url to url
+    alt_text = db.Column(db.Text)
+    position = db.Column(db.Integer, nullable=False, default=0)  # Changed from display_order to position
+    is_primary = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    product = db.relationship('Product', back_populates='images')
+
+class Address(db.Model):
+    __tablename__ = 'addresses'
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=False)
+    address_line1 = db.Column(db.Text, nullable=False)
+    address_line2 = db.Column(db.Text)
+    city = db.Column(db.Text, nullable=False)
+    state_province = db.Column(db.Text)
+    postal_code = db.Column(db.String(20), nullable=False)
+    country = db.Column(db.String(2), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    user = db.relationship('User', back_populates='addresses')
+    
+
+class Wishlist(db.Model):
+    __tablename__ = 'wishlists'
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    user = db.relationship('User', back_populates='wishlists')
+    items = db.relationship('WishlistItem', back_populates='wishlist')
+
+class WishlistItem(db.Model):
+    __tablename__ = 'wishlist_items'
+    id = db.Column(db.BigInteger, primary_key=True)
+    wishlist_id = db.Column(db.BigInteger, db.ForeignKey('wishlists.id'), nullable=False)
+    product_id = db.Column(db.BigInteger, db.ForeignKey('products.id'), nullable=False)
+    added_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    wishlist = db.relationship('Wishlist', back_populates='items')
+    product = db.relationship('Product')
 
 class Cart(db.Model):
     __tablename__ = 'carts'
-    id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
-    user_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    user = db.relationship('User', back_populates='carts')
+    items = db.relationship('CartItem', back_populates='cart')
 
-    customer = db.relationship("Customer", back_populates="carts") # Define the relationship with Customer
-    cartitems = db.relationship("CartItems", back_populates="cart") #One to many relationship between Cart and CartItems
+class CartItem(db.Model):
+    __tablename__ = 'cart_items'
+    id = db.Column(db.BigInteger, primary_key=True)
+    cart_id = db.Column(db.BigInteger, db.ForeignKey('carts.id'), nullable=False)
+    product_id = db.Column(db.BigInteger, db.ForeignKey('products.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    unit_price_cents = db.Column(db.Integer, nullable=False)
+    added_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    cart = db.relationship('Cart', back_populates='items')
+    product = db.relationship('Product')
 
-class CartItems(db.Model):
-    __tablename__ = 'cartitems'
-    id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
-    cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    product = db.relationship("Products")
-    cart = db.relationship("Cart", back_populates="cartitems")
-
-
-
-class Orders(db.Model):
-    __tablename__ = 'orders'
-    id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
-    status = db.Column(db.Boolean, default=True)
-    total_amount = db.Column(db.Float, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
-    orderitems = db.relationship("OrderItems", back_populates="order")
-    user_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
-    customer = db.relationship("Customer", back_populates="orders") # Define the relationship with Customer
-
-
-class OrderItems(db.Model):
-    __tablename__ = 'orderitems'
-    id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
-    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
-
-    product = db.relationship("Products")
-    order = db.relationship("Orders", back_populates="orderitems")
-
-
-class Payments(db.Model):
+class Payment(db.Model):
     __tablename__ = 'payments'
-    id = db.Column(db.Integer, primary_key=True) # Define the id as a primary key
-    cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
-    stripe_session_id = db.Column(db.String(200), nullable=False)
-    status = db.Column(db.Boolean, default=True)
+    id = db.Column(db.BigInteger, primary_key=True)
+    provider = db.Column(db.Text, nullable=False, default='stripe')
+    provider_payment_id = db.Column(db.Text, unique=True, nullable=False)
+    status = db.Column(db.String(50), nullable=False, default='succeeded')
+    amount_cents = db.Column(db.Integer, nullable=False)
+    currency = db.Column(db.String(3), nullable=False, default='CAD')
+    raw_response = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
 
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=False)
+    subtotal_cents = db.Column(db.Integer, nullable=False)
+    tax_cents = db.Column(db.Integer, nullable=False, default=0)
+    shipping_cents = db.Column(db.Integer, nullable=False, default=0)
+    total_cents = db.Column(db.Integer, nullable=False)
+    currency = db.Column(db.String(3), nullable=False, default='CAD')
+    payment_id = db.Column(db.BigInteger, db.ForeignKey('payments.id'))
+    shipping_address_id = db.Column(db.BigInteger, db.ForeignKey('addresses.id'))
+    billing_address_id = db.Column(db.BigInteger, db.ForeignKey('addresses.id'))
+    placed_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    user = db.relationship('User', back_populates='orders')
+    items = db.relationship('OrderItem', back_populates='order')
+    payment = db.relationship('Payment')
 
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.BigInteger, primary_key=True)
+    order_id = db.Column(db.BigInteger, db.ForeignKey('orders.id'), nullable=False)
+    product_id = db.Column(db.BigInteger, db.ForeignKey('products.id'))
+    title_snapshot = db.Column(db.Text, nullable=False)
+    unit_price_cents = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    line_total_cents = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    
+    order = db.relationship('Order', back_populates='items')
+    product = db.relationship('Product')
 
 

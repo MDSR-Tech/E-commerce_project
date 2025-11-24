@@ -1,49 +1,192 @@
-from .models import User
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended.exceptions import NoAuthorizationError
-from jwt import ExpiredSignatureError
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-from .models import Customer, Products
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import Product, Category, Brand, ProductImage
+from extensions import db
 
-products_bp = Blueprint("products", __name__, url_prefix="/products")
+products_bp = Blueprint("products", __name__, url_prefix="/api")
 
 """
-GET /products: List all products
-GET /products/:id: Fetch product details
+GET /api/products: List all active products
+GET /api/products/:id: Fetch product details by ID
+GET /api/products/slug/:slug: Fetch product details by slug
+GET /api/categories/:slug/products: Fetch products by category
 """
 
 @products_bp.route('/products', methods=["GET"])
 def get_products():
-    if request.method == "GET":
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({'error': 'Token is missing'}), 400
+    """Get all active products with their brand, category, and images"""
+    try:
+        products = Product.query.filter_by(is_active=True).all()
         
-        if token.startswith('Bearer '):
-            token = token[7:]
-
-        try:
-            verify_jwt_in_request()
-            username = get_jwt_identity()
-        except ExpiredSignatureError:
-            return jsonify({'error': 'Token has expired'}), 401
-        except NoAuthorizationError:
-            return jsonify({'error': 'Invalid token'}), 401
-
-        user = Customer.query.filter_by(username=username).first()
-        products = Products.query.filter_by(user_id=user.id).all()
-
-        products_list = [] # Initialize an empty list to hold the book data
-        for p in products:
+        products_list = []
+        for product in products:
+            # Get first image or None
+            first_image = product.images[0].url if product.images else None
+            
             products_list.append({
-                'name': p.name,
-                'description': p.description,
-                'price': p.price,
-                'available': p.available,
-                'stock': p.stock
+                'id': product.id,
+                'title': product.title,
+                'slug': product.slug,
+                'description': product.description,
+                'price_cents': product.price_cents,
+                'currency': product.currency,
+                'stock': product.stock,
+                'brand': {
+                    'id': product.brand.id,
+                    'name': product.brand.name,
+                    'slug': product.brand.slug
+                } if product.brand else None,
+                'category': {
+                    'id': product.category.id,
+                    'name': product.category.name,
+                    'slug': product.category.slug
+                } if product.category else None,
+                'images': [
+                    {
+                        'url': img.image_url,
+                        'alt': img.alt_text,
+                        'order': img.display_order
+                    } for img in product.images
+                ],
+                'created_at': product.created_at.isoformat(),
+                'updated_at': product.updated_at.isoformat()
             })
-
+        
         return jsonify({'products': products_list}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@products_bp.route('/products/<int:product_id>', methods=["GET"])
+def get_product_by_id(product_id):
+    """Get a single product by ID"""
+    try:
+        product = Product.query.filter_by(id=product_id, is_active=True).first()
+        
+        if not product:
+            return jsonify({'error': 'Product not found'}), 404
+        
+        product_data = {
+            'id': product.id,
+            'title': product.title,
+            'slug': product.slug,
+            'description': product.description,
+            'price_cents': product.price_cents,
+            'currency': product.currency,
+            'stock': product.stock,
+            'brand': {
+                'id': product.brand.id,
+                'name': product.brand.name,
+                'slug': product.brand.slug
+            } if product.brand else None,
+            'category': {
+                'id': product.category.id,
+                'name': product.category.name,
+                'slug': product.category.slug
+            } if product.category else None,
+            'images': [
+                {
+                    'url': img.image_url,
+                    'alt': img.alt_text,
+                    'order': img.display_order
+                } for img in sorted(product.images, key=lambda x: x.display_order)
+            ],
+            'created_at': product.created_at.isoformat(),
+            'updated_at': product.updated_at.isoformat()
+        }
+        
+        return jsonify(product_data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@products_bp.route('/products/slug/<string:slug>', methods=["GET"])
+def get_product_by_slug(slug):
+    """Get a single product by slug"""
+    try:
+        product = Product.query.filter_by(slug=slug, is_active=True).first()
+        
+        if not product:
+            return jsonify({'error': 'Product not found'}), 404
+        
+        product_data = {
+            'id': product.id,
+            'title': product.title,
+            'slug': product.slug,
+            'description': product.description,
+            'price_cents': product.price_cents,
+            'currency': product.currency,
+            'stock': product.stock,
+            'brand': {
+                'id': product.brand.id,
+                'name': product.brand.name,
+                'slug': product.brand.slug
+            } if product.brand else None,
+            'category': {
+                'id': product.category.id,
+                'name': product.category.name,
+                'slug': product.category.slug
+            } if product.category else None,
+            'images': [
+                {
+                    'url': img.url,
+                    'alt': img.alt_text,
+                    'order': img.position
+                } for img in sorted(product.images, key=lambda x: x.position)
+            ],
+            'created_at': product.created_at.isoformat(),
+            'updated_at': product.updated_at.isoformat()
+        }
+        
+        return jsonify(product_data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@products_bp.route('/categories/<string:category_slug>/products', methods=["GET"])
+def get_products_by_category(category_slug):
+    """Get all products in a specific category"""
+    try:
+        category = Category.query.filter_by(slug=category_slug).first()
+        
+        if not category:
+            return jsonify({'error': 'Category not found'}), 404
+        
+        products = Product.query.filter_by(category_id=category.id, is_active=True).all()
+        
+        products_list = []
+        for product in products:
+            first_image = product.images[0].url if product.images else None
+            
+            products_list.append({
+                'id': product.id,
+                'title': product.title,
+                'slug': product.slug,
+                'description': product.description,
+                'price_cents': product.price_cents,
+                'currency': product.currency,
+                'stock': product.stock,
+                'brand': {
+                    'id': product.brand.id,
+                    'name': product.brand.name,
+                    'slug': product.brand.slug
+                } if product.brand else None,
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'slug': category.slug
+                },
+                'images': [
+                    {
+                        'url': img.url,
+                        'alt': img.alt_text,
+                        'order': img.position
+                    } for img in product.images
+                ],
+                'created_at': product.created_at.isoformat(),
+                'updated_at': product.updated_at.isoformat()
+            })
+        
+        return jsonify({'products': products_list, 'category': {'name': category.name, 'slug': category.slug}}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     
 
 

@@ -1,0 +1,129 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { ShoppingCart, User, Search, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+export default function Navbar() {
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsCategoriesOpen(false);
+      }
+    }
+
+    if (isCategoriesOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Disable scrolling when dropdown is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Re-enable scrolling when dropdown is closed
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isCategoriesOpen]);
+
+  const categories = [
+    'Laptops',
+    'Phones',
+    'Tablets',
+    'Audio',
+    'Accessories',
+    'Wearables',
+  ];
+
+  return (
+    <>
+      {/* Backdrop overlay */}
+      {isCategoriesOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-40 transition-opacity"
+          onClick={() => setIsCategoriesOpen(false)}
+        />
+      )}
+
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="shrink-0">
+            <h1 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity">
+              MDSRTech
+            </h1>
+          </Link>
+
+          {/* Categories Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              <span className="font-medium">Categories</span>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${
+                  isCategoriesOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {isCategoriesOpen && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Search Bar */}
+          <div className="flex-1 max-w-xl mx-8">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search for products..."
+                className="w-full px-4 py-2 pl-10 pr-4 text-gray-700 bg-gray-100 border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+
+          {/* Cart and Profile */}
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.push('/cart')}
+              className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              <ShoppingCart className="w-6 h-6" />
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
+                0
+              </span>
+            </button>
+
+            <button 
+                onClick={() => router.push('/auth')}
+                className="flex items-center gap-2 p-2 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              <User className="w-6 h-6" />
+                <span className="text-sm font-medium">Sign Up / Log In</span>
+            </button>
+          </div>
+        </div>
+        </div>
+      </nav>
+    </>
+  );
+}

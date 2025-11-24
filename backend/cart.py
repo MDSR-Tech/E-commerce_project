@@ -1,5 +1,5 @@
-from .models import Customer, CartItems
-from .extensions import db
+from models import User, CartItem, Cart
+from extensions import db
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended.exceptions import NoAuthorizationError
 from jwt import ExpiredSignatureError
