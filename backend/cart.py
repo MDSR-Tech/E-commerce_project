@@ -26,8 +26,8 @@ def get_user_cart():
         except NoAuthorizationError:
             return jsonify({'error': 'Invalid token'}), 401
 
-        user = Customer.query.filter_by(username=username).first()
-        cartItem = CartItems.query.filter_by(user_id=user.id).all()
+        user = User.query.filter_by(username=username).first()
+        cartItem = CartItem.query.filter_by(user_id=user.id).all()
 
         item_list = [] # Initialize an empty list to hold item data
         for i in cartItem:
@@ -59,12 +59,12 @@ def post_user_cart():
         except NoAuthorizationError:
             return jsonify({'error': 'Invalid token'}), 401
 
-        user = Customer.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first()
         data = request.get_json()
         product_id = data.get('product_id')
         quantity = data.get('quantity')
 
-        cart_list = CartItems(user_id=user.id, product_id=product_id, quantity=quantity)
+        cart_list = CartItem(user_id=user.id, product_id=product_id, quantity=quantity)
 
         db.session.add(cart_list)
         db.session.commit()
@@ -96,8 +96,8 @@ def put_user_cart(item_id):
             return jsonify({'error': 'Invalid token'}), 401
 
         data = request.get_json()
-        user = Customer.query.filter_by(username=username).first()
-        cartItem = CartItems.query.filter_by(id=item_id, user_id=user.id).first()
+        user = User.query.filter_by(username=username).first()
+        cartItem = CartItem.query.filter_by(id=item_id, user_id=user.id).first()
         
         if 'quantity' in data:
             cartItem.quantity = data['quantity']
@@ -129,8 +129,8 @@ def delete_user_cart(item_id):
     except NoAuthorizationError:
         return jsonify({'error': 'Invalid token'}), 401
 
-    user = Customer.query.filter_by(username=username).first()
-    cartItem = CartItems.query.filter_by(id=item_id, user_id=user.id).first()
+    user = User.query.filter_by(username=username).first()
+    cartItem = CartItem.query.filter_by(id=item_id, user_id=user.id).first()
 
     if not cartItem:
         return jsonify({'error': 'Item not found'}), 400
