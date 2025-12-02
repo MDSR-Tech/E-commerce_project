@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, Minus, ShoppingCart, Heart, Tag } from 'lucide-react';
 import { useState } from 'react';
+import Image from 'next/image';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -115,10 +116,22 @@ export default function ProductPageClient({ product }: { product: Product }) {
         <div className="flex flex-col items-center text-center space-y-8">
           {/* Product Image */}
           <div className="w-full max-w-md">
-            <div className="aspect-square bg-gray-100 rounded-2xl flex items-center justify-center">
-              <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                <span className="text-gray-400">Product Image</span>
-              </div>
+            <div className="aspect-square bg-white rounded-2xl overflow-hidden relative">
+              {product.image ? (
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-6"
+                  sizes="(max-width: 768px) 100vw, 448px"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-400">Product Image</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

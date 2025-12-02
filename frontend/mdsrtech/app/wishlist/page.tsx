@@ -288,22 +288,22 @@ function WishlistProductCard({
       {/* Clickable Product Image and Name Area */}
       <Link href={`/product/${product.id}`} className="block">
         {/* Product Image */}
-        <div className="relative h-64 bg-gray-100 overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            {product.image ? (
-              <Image 
-                src={product.image.url} 
-                alt={product.image.alt_text || product.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              />
-            ) : (
+        <div className="relative h-64 bg-white overflow-hidden">
+          {product.image ? (
+            <Image 
+              src={product.image.url} 
+              alt={product.image.alt_text || product.title}
+              fill
+              className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-40 h-40 bg-gray-200 rounded-lg flex items-center justify-center">
                 <span className="text-gray-400 text-sm">Product Image</span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Product Info */}

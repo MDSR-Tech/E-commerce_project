@@ -138,13 +138,13 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Clickable Product Image and Name Area */}
       <Link href={`/product/${product.id}`} className="block">
         {/* Product Image */}
-        <div className="relative h-64 bg-gray-100 overflow-hidden">
+        <div className="relative h-64 bg-white overflow-hidden">
           {product.image && product.image !== '/placeholder-product.jpg' ? (
             <Image
               src={product.image}
               alt={product.name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (
