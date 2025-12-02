@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -43,7 +43,17 @@ function GithubIcon() {
   );
 }
 
-export default function AuthPage() {
+// Loading component for Suspense fallback
+function AuthLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+    </div>
+  );
+}
+
+// Main auth content component that uses useSearchParams
+function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, register, loginWithGoogle, loginWithGithub, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -425,5 +435,14 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<AuthLoading />}>
+      <AuthContent />
+    </Suspense>
   );
 }
