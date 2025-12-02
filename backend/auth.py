@@ -6,8 +6,10 @@ from flask_jwt_extended import (
     create_access_token, 
     create_refresh_token,
     jwt_required, 
-    get_jwt_identity
+    get_jwt_identity,
+    get_jwt
 )
+from functools import wraps
 from datetime import timedelta
 import os
 import httpx
@@ -17,6 +19,23 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 # Token expiration times
 ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
 REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+
+
+def admin_required():
+    """
+    Decorator that ensures the current user is an admin.
+    Must be used AFTER @jwt_required() decorator.
+    Returns 403 Forbidden if user is not an admin.
+    """
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            claims = get_jwt()
+            if claims.get('role') != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 def create_tokens(user):
@@ -424,3 +443,32 @@ def github_callback():
         
     except Exception as e:
         return jsonify({'error': f'OAuth error: {str(e)}'}), 500
+
+
+# ==================== ADMIN ROUTES ====================
+
+@auth_bp.route('/admin/verify', methods=['GET'])
+@jwt_required()
+@admin_required()
+def verify_admin():
+    """
+    Verify that the current user is an admin.
+    This endpoint is protected - only admins can access it.
+    Returns 403 if not admin, 200 if admin.
+    """
+    claims = get_jwt()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify({
+        'message': 'Admin access verified',
+        'admin': {
+            'id': str(user.id),
+            'email': user.email,
+            'full_name': user.full_name,
+            'role': user.role
+        }
+    }), 200

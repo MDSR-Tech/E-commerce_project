@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, User, Search, ChevronDown, LogOut, Heart, Package } from 'lucide-react';
+import { ShoppingCart, User, Search, ChevronDown, LogOut, Heart, Package, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -191,6 +191,17 @@ export default function Navbar() {
                 <User className="w-6 h-6" />
                 <span className="text-sm font-medium">Sign Up / Log In</span>
               </button>
+            )}
+
+            {/* Admin Link - Only visible to admins */}
+            {isAuthenticated && user?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <Shield className="w-4 h-4" />
+                <span className="text-sm font-medium">Admin</span>
+              </Link>
             )}
           </div>
         </div>
