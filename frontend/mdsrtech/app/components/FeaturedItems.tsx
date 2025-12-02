@@ -5,6 +5,9 @@ interface Product {
   id: number;
   name: string;
   price: number;
+  originalPrice?: number;
+  isOnSale?: boolean;
+  salePercent?: number;
   stock: number;
   image: string;
 }
@@ -17,9 +20,15 @@ export default async function FeaturedItems() {
   const products: Product[] = dbProducts.map((dbProduct) => ({
     id: dbProduct.id,
     name: dbProduct.title,
-    price: dbProduct.price_cents / 100, // Convert cents to dollars
+    // Use sale price if on sale, otherwise regular price
+    price: dbProduct.is_on_sale && dbProduct.sale_price_cents 
+      ? dbProduct.sale_price_cents / 100 
+      : dbProduct.price_cents / 100,
+    originalPrice: dbProduct.is_on_sale ? dbProduct.price_cents / 100 : undefined,
+    isOnSale: dbProduct.is_on_sale,
+    salePercent: dbProduct.sale_percent || undefined,
     stock: dbProduct.stock,
-    image: dbProduct.images?.[0]?.url || '/placeholder-product.jpg',
+    image: dbProduct.image?.url || dbProduct.images?.[0]?.url || '/placeholder-product.jpg',
   }));
 
   return (

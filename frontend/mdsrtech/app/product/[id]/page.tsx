@@ -17,13 +17,18 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     );
   }
   
-  // Transform API product to component format
+  // Transform API product to component format with sale info
   const productForClient = {
     id: product.id,
     name: product.title,
-    price: product.price_cents / 100,
+    price: product.is_on_sale && product.sale_price_cents 
+      ? product.sale_price_cents / 100 
+      : product.price_cents / 100,
+    originalPrice: product.is_on_sale ? product.price_cents / 100 : undefined,
+    isOnSale: product.is_on_sale,
+    salePercent: product.sale_percent || undefined,
     stock: product.stock,
-    image: product.images?.[0]?.url || '/placeholder-product.jpg',
+    image: product.image?.url || product.images?.[0]?.url || '/placeholder-product.jpg',
     description: product.description || 'No description available',
     brand: product.brand?.name,
     category: product.category?.name,

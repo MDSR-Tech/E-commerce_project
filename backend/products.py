@@ -12,46 +12,61 @@ GET /api/products/slug/:slug: Fetch product details by slug
 GET /api/categories/:slug/products: Fetch products by category
 """
 
+def product_to_dict(product):
+    """Convert a product to dictionary with sale info"""
+    # Get first/primary image
+    primary_image = next((img for img in product.images if img.is_primary), None)
+    if not primary_image and product.images:
+        primary_image = product.images[0]
+    
+    # Calculate sale info
+    is_on_sale = product.is_on_sale
+    sale_percent = product.effective_sale_percent if is_on_sale else None
+    sale_price_cents = product.sale_price_cents if is_on_sale else None
+    
+    return {
+        'id': product.id,
+        'title': product.title,
+        'slug': product.slug,
+        'description': product.description,
+        'price_cents': product.price_cents,
+        'currency': product.currency,
+        'stock': product.stock,
+        # Sale info
+        'is_on_sale': is_on_sale,
+        'sale_percent': sale_percent,
+        'sale_price_cents': sale_price_cents,
+        'brand': {
+            'id': product.brand.id,
+            'name': product.brand.name,
+            'slug': product.brand.slug
+        } if product.brand else None,
+        'category': {
+            'id': product.category.id,
+            'name': product.category.name,
+            'slug': product.category.slug
+        } if product.category else None,
+        'image': {
+            'url': primary_image.url,
+            'alt_text': primary_image.alt_text
+        } if primary_image else None,
+        'images': [
+            {
+                'url': img.url,
+                'alt': img.alt_text,
+                'order': img.position
+            } for img in sorted(product.images, key=lambda x: x.position)
+        ],
+        'created_at': product.created_at.isoformat(),
+        'updated_at': product.updated_at.isoformat()
+    }
+
 @products_bp.route('/products', methods=["GET"])
 def get_products():
     """Get all active products with their brand, category, and images"""
     try:
-        products = Product.query.filter_by(is_active=True).all()
-        
-        products_list = []
-        for product in products:
-            # Get first image or None
-            first_image = product.images[0].url if product.images else None
-            
-            products_list.append({
-                'id': product.id,
-                'title': product.title,
-                'slug': product.slug,
-                'description': product.description,
-                'price_cents': product.price_cents,
-                'currency': product.currency,
-                'stock': product.stock,
-                'brand': {
-                    'id': product.brand.id,
-                    'name': product.brand.name,
-                    'slug': product.brand.slug
-                } if product.brand else None,
-                'category': {
-                    'id': product.category.id,
-                    'name': product.category.name,
-                    'slug': product.category.slug
-                } if product.category else None,
-                'images': [
-                    {
-                        'url': img.image_url,
-                        'alt': img.alt_text,
-                        'order': img.display_order
-                    } for img in product.images
-                ],
-                'created_at': product.created_at.isoformat(),
-                'updated_at': product.updated_at.isoformat()
-            })
-        
+        products = Product.query.filter_by(is_active=True).order_by(Product.id).all()
+        products_list = [product_to_dict(p) for p in products]
         return jsonify({'products': products_list}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -65,36 +80,7 @@ def get_product_by_id(product_id):
         if not product:
             return jsonify({'error': 'Product not found'}), 404
         
-        product_data = {
-            'id': product.id,
-            'title': product.title,
-            'slug': product.slug,
-            'description': product.description,
-            'price_cents': product.price_cents,
-            'currency': product.currency,
-            'stock': product.stock,
-            'brand': {
-                'id': product.brand.id,
-                'name': product.brand.name,
-                'slug': product.brand.slug
-            } if product.brand else None,
-            'category': {
-                'id': product.category.id,
-                'name': product.category.name,
-                'slug': product.category.slug
-            } if product.category else None,
-            'images': [
-                {
-                    'url': img.image_url,
-                    'alt': img.alt_text,
-                    'order': img.display_order
-                } for img in sorted(product.images, key=lambda x: x.display_order)
-            ],
-            'created_at': product.created_at.isoformat(),
-            'updated_at': product.updated_at.isoformat()
-        }
-        
-        return jsonify(product_data), 200
+        return jsonify(product_to_dict(product)), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -107,36 +93,7 @@ def get_product_by_slug(slug):
         if not product:
             return jsonify({'error': 'Product not found'}), 404
         
-        product_data = {
-            'id': product.id,
-            'title': product.title,
-            'slug': product.slug,
-            'description': product.description,
-            'price_cents': product.price_cents,
-            'currency': product.currency,
-            'stock': product.stock,
-            'brand': {
-                'id': product.brand.id,
-                'name': product.brand.name,
-                'slug': product.brand.slug
-            } if product.brand else None,
-            'category': {
-                'id': product.category.id,
-                'name': product.category.name,
-                'slug': product.category.slug
-            } if product.category else None,
-            'images': [
-                {
-                    'url': img.url,
-                    'alt': img.alt_text,
-                    'order': img.position
-                } for img in sorted(product.images, key=lambda x: x.position)
-            ],
-            'created_at': product.created_at.isoformat(),
-            'updated_at': product.updated_at.isoformat()
-        }
-        
-        return jsonify(product_data), 200
+        return jsonify(product_to_dict(product)), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -150,41 +107,16 @@ def get_products_by_category(category_slug):
             return jsonify({'error': 'Category not found'}), 404
         
         products = Product.query.filter_by(category_id=category.id, is_active=True).all()
+        products_list = [product_to_dict(p) for p in products]
         
-        products_list = []
-        for product in products:
-            first_image = product.images[0].url if product.images else None
-            
-            products_list.append({
-                'id': product.id,
-                'title': product.title,
-                'slug': product.slug,
-                'description': product.description,
-                'price_cents': product.price_cents,
-                'currency': product.currency,
-                'stock': product.stock,
-                'brand': {
-                    'id': product.brand.id,
-                    'name': product.brand.name,
-                    'slug': product.brand.slug
-                } if product.brand else None,
-                'category': {
-                    'id': category.id,
-                    'name': category.name,
-                    'slug': category.slug
-                },
-                'images': [
-                    {
-                        'url': img.url,
-                        'alt': img.alt_text,
-                        'order': img.position
-                    } for img in product.images
-                ],
-                'created_at': product.created_at.isoformat(),
-                'updated_at': product.updated_at.isoformat()
-            })
-        
-        return jsonify({'products': products_list, 'category': {'name': category.name, 'slug': category.slug}}), 200
+        return jsonify({
+            'products': products_list, 
+            'category': {
+                'name': category.name, 
+                'slug': category.slug,
+                'sale_percent': category.sale_percent
+            }
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     

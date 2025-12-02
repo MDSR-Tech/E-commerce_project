@@ -18,6 +18,15 @@ export interface Product {
   price_cents: number;
   currency: string;
   stock: number;
+  // Sale info
+  is_on_sale: boolean;
+  sale_percent: number | null;
+  sale_price_cents: number | null;
+  // Images
+  image: {
+    url: string;
+    alt_text: string | null;
+  } | null;
   images: Array<{
     url: string;
     alt: string | null;

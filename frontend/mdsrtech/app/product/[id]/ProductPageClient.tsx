@@ -1,14 +1,21 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingCart, Heart, Tag } from 'lucide-react';
 import { useState } from 'react';
 import Navbar from '../../components/Navbar';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useCart } from '@/contexts/CartContext';
 
 interface Product {
   id: number;
   name: string;
   price: number;
+  originalPrice?: number;
+  isOnSale?: boolean;
+  salePercent?: number;
   stock: number;
   image: string;
   description?: string;
@@ -18,7 +25,37 @@ interface Product {
 
 export default function ProductPageClient({ product }: { product: Product }) {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { showToast } = useToast();
+  const { addToCart } = useCart();
+  
   const [quantity, setQuantity] = useState(1);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  const isWishlisted = isInWishlist(product.id);
+
+  const handleWishlistClick = async () => {
+    if (!isAuthenticated) {
+      showToast('Please sign in to add items to your wishlist', 'info');
+      return;
+    }
+
+    setIsWishlistLoading(true);
+    const result = await toggleWishlist(product.id);
+    setIsWishlistLoading(false);
+
+    if (result.success) {
+      if (result.action === 'added') {
+        showToast(`${product.name} added to wishlist`, 'success');
+      } else {
+        showToast(`${product.name} removed from wishlist`, 'success');
+      }
+    } else {
+      showToast(result.error || 'Failed to update wishlist', 'error');
+    }
+  };
 
   const incrementQuantity = () => {
     if (quantity < product.stock) {
@@ -41,8 +78,21 @@ export default function ProductPageClient({ product }: { product: Product }) {
     }
   };
 
-  const handleAddToCart = () => {
-    console.log(`Adding ${quantity} of ${product.name} to cart`);
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      showToast('Please sign in to add items to your cart', 'info');
+      return;
+    }
+
+    setIsAddingToCart(true);
+    const result = await addToCart(product.id, quantity, product.name);
+    setIsAddingToCart(false);
+
+    if (result.success) {
+      showToast(`Added ${quantity} ${product.name} to cart`, 'success');
+    } else {
+      showToast(result.error || 'Failed to add to cart', 'error');
+    }
   };
 
   return (
@@ -91,10 +141,36 @@ export default function ProductPageClient({ product }: { product: Product }) {
             </p>
           )}
 
+          {/* Sale Badge */}
+          {product.isOnSale && product.salePercent && (
+            <div className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-full font-bold">
+              <Tag className="w-5 h-5" />
+              {product.salePercent}% OFF - Limited Time Sale!
+            </div>
+          )}
+
           {/* Price */}
-          <p className="text-5xl font-bold text-blue-600">
-            ${product.price.toFixed(2)}
-          </p>
+          <div className="flex items-center justify-center gap-4">
+            {product.isOnSale && product.originalPrice ? (
+              <>
+                <p className="text-5xl font-bold text-red-600">
+                  ${product.price.toFixed(2)}
+                </p>
+                <div className="flex flex-col items-start">
+                  <p className="text-2xl text-gray-400 line-through">
+                    ${product.originalPrice.toFixed(2)}
+                  </p>
+                  <p className="text-green-600 font-semibold">
+                    Save ${(product.originalPrice - product.price).toFixed(2)}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-5xl font-bold text-blue-600">
+                ${product.price.toFixed(2)}
+              </p>
+            )}
+          </div>
 
           {/* Stock */}
           <p
@@ -136,14 +212,41 @@ export default function ProductPageClient({ product }: { product: Product }) {
               </button>
             </div>
 
-            {/* Add to Cart Button */}
-            <button
-              onClick={handleAddToCart}
-              className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <ShoppingCart className="w-6 h-6" />
-              Add to Cart
-            </button>
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {/* Add to Cart Button */}
+              <button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold text-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+              >
+                {isAddingToCart ? (
+                  <>
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Adding to Cart...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-6 h-6" />
+                    Add to Cart
+                  </>
+                )}
+              </button>
+
+              {/* Add to Wishlist Button */}
+              <button
+                onClick={handleWishlistClick}
+                disabled={isWishlistLoading}
+                className={`w-full py-4 rounded-xl font-semibold text-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
+                  isWishlisted 
+                    ? 'bg-red-50 text-red-600 border-2 border-red-200 hover:bg-red-100' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Heart className={`w-6 h-6 ${isWishlisted ? 'fill-red-500' : ''} ${isWishlistLoading ? 'animate-pulse' : ''}`} />
+                {isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

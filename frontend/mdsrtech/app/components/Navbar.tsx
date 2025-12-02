@@ -1,28 +1,38 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, User, Search, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, Search, ChevronDown, LogOut, Heart, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 
 export default function Navbar() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { totalItems } = useCart();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsCategoriesOpen(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
     }
 
-    if (isCategoriesOpen) {
+    if (isCategoriesOpen || isUserMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      // Disable scrolling when dropdown is open
+    }
+    
+    if (isCategoriesOpen) {
       document.body.style.overflow = 'hidden';
     } else {
-      // Re-enable scrolling when dropdown is closed
       document.body.style.overflow = 'unset';
     }
 
@@ -30,7 +40,13 @@ export default function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = 'unset';
     };
-  }, [isCategoriesOpen]);
+  }, [isCategoriesOpen, isUserMenuOpen]);
+
+  const handleLogout = () => {
+    logout();
+    setIsUserMenuOpen(false);
+    router.push('/');
+  };
 
   const categories = [
     'Laptops',
@@ -108,18 +124,74 @@ export default function Navbar() {
               className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
             >
               <ShoppingCart className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
-                0
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
             </button>
 
-            <button 
+            {/* User Menu / Auth Button */}
+            {isLoading ? (
+              <div className="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
+            ) : isAuthenticated && user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button 
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 p-2 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+                >
+                  <User className="w-6 h-6" />
+                  <span className="text-sm font-medium max-w-[120px] truncate">
+                    {user.full_name}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900 truncate">{user.full_name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        router.push('/wishlist');
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer flex items-center gap-2"
+                    >
+                      <Heart className="w-4 h-4" />
+                      My Wishlist
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        router.push('/orders');
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer flex items-center gap-2"
+                    >
+                      <Package className="w-4 h-4" />
+                      My Orders
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors cursor-pointer flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
                 onClick={() => router.push('/auth')}
                 className="flex items-center gap-2 p-2 text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              <User className="w-6 h-6" />
+              >
+                <User className="w-6 h-6" />
                 <span className="text-sm font-medium">Sign Up / Log In</span>
-            </button>
+              </button>
+            )}
           </div>
         </div>
         </div>
