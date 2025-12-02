@@ -192,6 +192,17 @@ export default function Navbar() {
                 <span className="text-sm font-medium">Sign Up / Log In</span>
               </button>
             )}
+
+            {/* Admin Link - Only visible to admins */}
+            {isAuthenticated && user?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <Shield className="w-4 h-4" />
+                <span className="text-sm font-medium">Admin</span>
+              </Link>
+            )}
           </div>
         </div>
         </div>
