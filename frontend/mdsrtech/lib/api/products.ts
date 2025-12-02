@@ -42,10 +42,11 @@ export interface Product {
 export async function getAllProducts(): Promise<Product[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/products`, {
-      next: { revalidate: 300 } // Cache for 5 minutes (300 seconds)
+      next: { revalidate: 300 } // Cache for 5 minutes
     });
     
     if (!response.ok) {
+      console.error(`Failed to fetch products: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
