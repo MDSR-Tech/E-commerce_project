@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, redirect
-from models import User
-from extensions import db, limiter
+from models import User, PasswordResetToken
+from extensions import db, limiter, mail
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import (
     create_access_token, 
@@ -9,10 +9,12 @@ from flask_jwt_extended import (
     get_jwt_identity,
     get_jwt
 )
+from flask_mail import Message
 from functools import wraps
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 import os
 import httpx
+import secrets
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -472,3 +474,180 @@ def verify_admin():
             'role': user.role
         }
     }), 200
+
+
+# ==================== PASSWORD RESET ROUTES ====================
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+@limiter.limit("5 per hour")  # Rate limit password reset requests
+def forgot_password():
+    """Request a password reset email"""
+    data = request.get_json()
+    email = data.get('email', '').lower().strip()
+    
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    
+    # Find user by email
+    user = User.query.filter_by(email=email).first()
+    
+    if not user:
+        return jsonify({'error': 'No account found with this email address'}), 404
+    
+    # Check if user uses OAuth (no password to reset)
+    if user.oauth_provider and not user.password_hash:
+        return jsonify({
+            'error': f'This account uses {user.oauth_provider.title()} sign-in. Please use the "{user.oauth_provider.title()}" button to log in.'
+        }), 400
+    
+    # Invalidate any existing reset tokens for this user
+    PasswordResetToken.query.filter_by(user_id=user.id, used=False).update({'used': True})
+    db.session.commit()
+    
+    # Generate a secure token
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)  # Token expires in 1 hour
+    
+    # Save token to database
+    reset_token = PasswordResetToken(
+        user_id=user.id,
+        token=token,
+        expires_at=expires_at
+    )
+    db.session.add(reset_token)
+    db.session.commit()
+    
+    # Build reset URL
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    reset_url = f"{frontend_url}/auth/reset-password?token={token}"
+    
+    # Send email
+    try:
+        msg = Message(
+            subject='Reset Your MDSRTech Password',
+            recipients=[email],
+            html=f'''
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h1 style="color: #2563eb; text-align: center;">MDSRTech</h1>
+                <h2 style="color: #1f2937;">Reset Your Password</h2>
+                <p style="color: #4b5563; font-size: 16px;">
+                    Hi {user.full_name},
+                </p>
+                <p style="color: #4b5563; font-size: 16px;">
+                    We received a request to reset your password. Click the button below to create a new password:
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_url}" style="background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                        Reset Password
+                    </a>
+                </div>
+                <p style="color: #4b5563; font-size: 14px;">
+                    This link will expire in 1 hour for security reasons.
+                </p>
+                <p style="color: #4b5563; font-size: 14px;">
+                    If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                </p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+                <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                    © 2025 MDSRTech. All rights reserved.
+                </p>
+            </div>
+            '''
+        )
+        mail.send(msg)
+        return jsonify({'message': 'Password reset email sent successfully'}), 200
+    except Exception as e:
+        # Log the error but don't expose details to user
+        print(f"Email sending error: {str(e)}")
+        return jsonify({'error': 'Failed to send email. Please try again later.'}), 500
+
+
+@auth_bp.route('/verify-reset-token', methods=['POST'])
+def verify_reset_token():
+    """Verify if a password reset token is valid"""
+    data = request.get_json()
+    token = data.get('token', '').strip()
+    
+    if not token:
+        return jsonify({'error': 'Token is required'}), 400
+    
+    # Find the token
+    reset_token = PasswordResetToken.query.filter_by(token=token, used=False).first()
+    
+    if not reset_token:
+        return jsonify({'error': 'Invalid or expired reset link'}), 400
+    
+    # Check if token has expired
+    if reset_token.expires_at < datetime.now(timezone.utc):
+        return jsonify({'error': 'This reset link has expired. Please request a new one.'}), 400
+    
+    return jsonify({'valid': True, 'email': reset_token.user.email}), 200
+
+
+@auth_bp.route('/reset-password', methods=['POST'])
+@limiter.limit("10 per hour")
+def reset_password():
+    """Reset password using a valid token"""
+    data = request.get_json()
+    token = data.get('token', '').strip()
+    new_password = data.get('password')
+    
+    if not token:
+        return jsonify({'error': 'Token is required'}), 400
+    
+    if not new_password:
+        return jsonify({'error': 'New password is required'}), 400
+    
+    if len(new_password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters long'}), 400
+    
+    # Find the token
+    reset_token = PasswordResetToken.query.filter_by(token=token, used=False).first()
+    
+    if not reset_token:
+        return jsonify({'error': 'Invalid or expired reset link'}), 400
+    
+    # Check if token has expired
+    if reset_token.expires_at < datetime.now(timezone.utc):
+        return jsonify({'error': 'This reset link has expired. Please request a new one.'}), 400
+    
+    # Update password
+    user = reset_token.user
+    user.password_hash = generate_password_hash(new_password)
+    
+    # Mark token as used
+    reset_token.used = True
+    
+    db.session.commit()
+    
+    # Send confirmation email
+    try:
+        msg = Message(
+            subject='Your MDSRTech Password Has Been Changed',
+            recipients=[user.email],
+            html=f'''
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h1 style="color: #2563eb; text-align: center;">MDSRTech</h1>
+                <h2 style="color: #1f2937;">Password Changed Successfully</h2>
+                <p style="color: #4b5563; font-size: 16px;">
+                    Hi {user.full_name},
+                </p>
+                <p style="color: #4b5563; font-size: 16px;">
+                    Your password has been successfully changed. You can now log in with your new password.
+                </p>
+                <p style="color: #4b5563; font-size: 14px;">
+                    If you did not make this change, please contact us immediately.
+                </p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+                <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                    © 2025 MDSRTech. All rights reserved.
+                </p>
+            </div>
+            '''
+        )
+        mail.send(msg)
+    except Exception as e:
+        # Log but don't fail - password was already changed
+        print(f"Confirmation email error: {str(e)}")
+    
+    return jsonify({'message': 'Password reset successfully'}), 200

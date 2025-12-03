@@ -6,6 +6,190 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Modal Component for Terms and Privacy
+interface PolicyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+function PolicyModal({ isOpen, onClose, title, children }: PolicyModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      {/* Backdrop - removed blur for better performance */}
+      <div className="absolute inset-0 bg-black/70" />
+      
+      {/* Modal */}
+      <div 
+        className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200 shrink-0">
+          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+        </div>
+        
+        {/* Content - using will-change and transform for GPU acceleration */}
+        <div className="p-6 overflow-y-auto flex-1 overscroll-contain">
+          {children}
+        </div>
+        
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50 shrink-0 flex justify-end">
+          <button
+            onClick={onClose}
+            className="py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors cursor-pointer text-sm"
+          >
+            I Understand
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Terms and Conditions Content
+function TermsContent() {
+  return (
+    <div className="space-y-6 text-gray-700">
+      <p className="text-sm text-gray-500">Last updated: December 2, 2025</p>
+      
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">1. Acceptance of Terms</h3>
+        <p>By accessing and using MDSRTech ("the Website"), you accept and agree to be bound by the terms and conditions of this agreement. If you do not agree to these terms, please do not use our services.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">2. Use of Service</h3>
+        <p>You agree to use the Website only for lawful purposes. You are prohibited from:</p>
+        <ul className="list-disc list-inside mt-2 space-y-1 ml-4">
+          <li>Using the service for any fraudulent or unlawful purpose</li>
+          <li>Attempting to gain unauthorized access to our systems</li>
+          <li>Interfering with or disrupting the service</li>
+          <li>Transmitting any viruses or malicious code</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">3. Account Registration</h3>
+        <p>When you create an account, you must provide accurate and complete information. You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">4. Products and Pricing</h3>
+        <p>All product descriptions and prices are subject to change without notice. We reserve the right to refuse or cancel any order for any reason, including but not limited to product availability, errors in pricing, or suspected fraud.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">5. Payment Terms</h3>
+        <p>Payment must be made at the time of purchase. We accept major credit cards and other payment methods as displayed during checkout. All transactions are processed securely through our payment providers.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">6. Shipping and Delivery</h3>
+        <p>Shipping times and costs vary based on location and shipping method selected. We are not responsible for delays caused by customs, weather, or carrier issues.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">7. Returns and Refunds</h3>
+        <p>Products may be returned within 30 days of delivery in their original condition. Refunds will be processed within 5-10 business days after we receive the returned item. Shipping costs are non-refundable.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">8. Limitation of Liability</h3>
+        <p>MDSRTech shall not be liable for any indirect, incidental, special, or consequential damages arising from the use of our services or products.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">9. Contact Information</h3>
+        <p>For questions about these Terms, please contact us at support@mdsrtech.com</p>
+      </section>
+    </div>
+  );
+}
+
+// Privacy Policy Content
+function PrivacyContent() {
+  return (
+    <div className="space-y-6 text-gray-700">
+      <p className="text-sm text-gray-500">Last updated: December 2, 2025</p>
+      
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">1. Information We Collect</h3>
+        <p>We collect information you provide directly to us, including:</p>
+        <ul className="list-disc list-inside mt-2 space-y-1 ml-4">
+          <li>Name and email address when you create an account</li>
+          <li>Billing and shipping address for orders</li>
+          <li>Payment information (processed securely by our payment providers)</li>
+          <li>Order history and preferences</li>
+          <li>Communications you send to us</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">2. How We Use Your Information</h3>
+        <p>We use the information we collect to:</p>
+        <ul className="list-disc list-inside mt-2 space-y-1 ml-4">
+          <li>Process and fulfill your orders</li>
+          <li>Send order confirmations and shipping updates</li>
+          <li>Provide customer support</li>
+          <li>Send promotional communications (with your consent)</li>
+          <li>Improve our services and user experience</li>
+          <li>Detect and prevent fraud</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">3. Information Sharing</h3>
+        <p>We do not sell your personal information. We may share your information with:</p>
+        <ul className="list-disc list-inside mt-2 space-y-1 ml-4">
+          <li>Service providers who assist in our operations (shipping, payment processing)</li>
+          <li>Legal authorities when required by law</li>
+          <li>Business partners with your explicit consent</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">4. Data Security</h3>
+        <p>We implement industry-standard security measures to protect your personal information, including encryption, secure servers, and regular security audits. However, no method of transmission over the internet is 100% secure.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">5. Cookies and Tracking</h3>
+        <p>We use cookies and similar technologies to enhance your browsing experience, analyze site traffic, and personalize content. You can control cookie settings through your browser preferences.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">6. Your Rights</h3>
+        <p>You have the right to:</p>
+        <ul className="list-disc list-inside mt-2 space-y-1 ml-4">
+          <li>Access the personal information we hold about you</li>
+          <li>Request correction of inaccurate information</li>
+          <li>Request deletion of your personal information</li>
+          <li>Opt out of marketing communications</li>
+          <li>Export your data in a portable format</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">7. Data Retention</h3>
+        <p>We retain your personal information for as long as necessary to fulfill the purposes outlined in this policy, unless a longer retention period is required by law.</p>
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">8. Contact Us</h3>
+        <p>If you have questions about this Privacy Policy or your personal data, please contact us at privacy@mdsrtech.com</p>
+      </section>
+    </div>
+  );
+}
+
 // Google Icon Component
 function GoogleIcon() {
   return (
@@ -63,7 +247,8 @@ function AuthContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   // Check for mode parameter in URL (login or signup)
   useEffect(() => {
     const mode = searchParams.get('mode');
@@ -368,9 +553,13 @@ function AuthContent() {
                   />
                   <label htmlFor="agreeTerms" className="ml-3 text-sm text-gray-600">
                     I agree to the{' '}
-                    <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setShowTermsModal(true)}
+                      className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
+                    >
                       Terms and Conditions
-                    </a>
+                    </button>
                   </label>
                 </div>
 
@@ -386,9 +575,13 @@ function AuthContent() {
                   />
                   <label htmlFor="agreePrivacy" className="ml-3 text-sm text-gray-600">
                     I agree to the{' '}
-                    <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setShowPrivacyModal(true)}
+                      className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
+                    >
                       Privacy Policy
-                    </a>
+                    </button>
                   </label>
                 </div>
               </div>
@@ -397,9 +590,9 @@ function AuthContent() {
             {/* Forgot Password - only for login */}
             {isLogin && (
               <div className="flex items-center justify-end">
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                   Forgot password?
-                </a>
+                </Link>
               </div>
             )}
 
@@ -434,6 +627,24 @@ function AuthContent() {
           </div>
         </div>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <PolicyModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title="Terms and Conditions"
+      >
+        <TermsContent />
+      </PolicyModal>
+
+      {/* Privacy Policy Modal */}
+      <PolicyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title="Privacy Policy"
+      >
+        <PrivacyContent />
+      </PolicyModal>
     </div>
   );
 }
