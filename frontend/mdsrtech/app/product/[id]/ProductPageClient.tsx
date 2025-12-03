@@ -299,29 +299,6 @@ export default function ProductPageClient({ product, suggestedProducts = [] }: P
                   </button>
                 </div>
 
-                {/* Features */}
-                <div className="border-t border-gray-100 pt-6 mt-auto">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Truck className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <span>Free Shipping</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <div className="p-2 bg-green-50 rounded-lg">
-                        <Shield className="w-5 h-5 text-green-600" />
-                      </div>
-                      <span>1 Year Warranty</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <div className="p-2 bg-purple-50 rounded-lg">
-                        <Package className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <span>Easy Returns</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
