@@ -524,8 +524,10 @@ def forgot_password():
     
     # Send email in background thread
     def send_reset_email_async(app, recipient_email, recipient_name, reset_link):
+        print(f"[EMAIL THREAD] Starting password reset email to {recipient_email}")
         with app.app_context():
             try:
+                print(f"[EMAIL THREAD] App context created, building message...")
                 msg = Message(
                     subject='Reset Your MDSRTech Password',
                     recipients=[recipient_email],
@@ -558,9 +560,11 @@ def forgot_password():
                     '''
                 )
                 mail.send(msg)
-                print(f"Password reset email sent to {recipient_email}")
+                print(f"[EMAIL THREAD] Password reset email sent successfully to {recipient_email}")
             except Exception as e:
-                print(f"Failed to send password reset email: {str(e)}")
+                print(f"[EMAIL THREAD] Failed to send password reset email: {str(e)}")
+                import traceback
+                traceback.print_exc()
     
     # Start email in background thread
     app = current_app._get_current_object()
