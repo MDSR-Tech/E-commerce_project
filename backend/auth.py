@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, redirect, current_app
+from flask import Blueprint, jsonify, request, redirect
 from models import User, PasswordResetToken
 from extensions import db, limiter, mail
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,7 +15,6 @@ from datetime import timedelta, datetime, timezone
 import os
 import httpx
 import secrets
-import threading
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -522,59 +521,53 @@ def forgot_password():
     frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
     reset_url = f"{frontend_url}/auth/reset-password?token={token}"
     
-    # Send email in background thread
-    def send_reset_email_async(app, recipient_email, recipient_name, reset_link):
-        print(f"[EMAIL THREAD] Starting password reset email to {recipient_email}")
-        with app.app_context():
-            try:
-                print(f"[EMAIL THREAD] App context created, building message...")
-                msg = Message(
-                    subject='Reset Your MDSRTech Password',
-                    recipients=[recipient_email],
-                    html=f'''
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <h1 style="color: #2563eb; text-align: center;">MDSRTech</h1>
-                        <h2 style="color: #1f2937;">Reset Your Password</h2>
-                        <p style="color: #4b5563; font-size: 16px;">
-                            Hi {recipient_name},
-                        </p>
-                        <p style="color: #4b5563; font-size: 16px;">
-                            We received a request to reset your password. Click the button below to create a new password:
-                        </p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="{reset_link}" style="background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                                Reset Password
-                            </a>
-                        </div>
-                        <p style="color: #4b5563; font-size: 14px;">
-                            This link will expire in 1 hour for security reasons.
-                        </p>
-                        <p style="color: #4b5563; font-size: 14px;">
-                            If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
-                        </p>
-                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-                        <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-                            © 2025 MDSRTech. All rights reserved.
-                        </p>
-                    </div>
-                    '''
-                )
-                mail.send(msg)
-                print(f"[EMAIL THREAD] Password reset email sent successfully to {recipient_email}")
-            except Exception as e:
-                print(f"[EMAIL THREAD] Failed to send password reset email: {str(e)}")
-                import traceback
-                traceback.print_exc()
+    # Skip email in production (Railway blocks SMTP) - return token so frontend can redirect
+    if os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('SKIP_EMAILS'):
+        print(f"[PROD] Skipping password reset email to {email} - returning token for redirect")
+        return jsonify({
+            'message': 'Password reset email sent successfully',
+            'redirect_token': token  # Frontend will use this to redirect directly
+        }), 200
     
-    # Start email in background thread
-    app = current_app._get_current_object()
-    thread = threading.Thread(
-        target=send_reset_email_async,
-        args=(app, email, user.full_name, reset_url)
-    )
-    thread.start()
-    
-    return jsonify({'message': 'Password reset email sent successfully'}), 200
+    # Send email (local development only)
+    try:
+        msg = Message(
+            subject='Reset Your MDSRTech Password',
+            recipients=[email],
+            html=f'''
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h1 style="color: #2563eb; text-align: center;">MDSRTech</h1>
+                <h2 style="color: #1f2937;">Reset Your Password</h2>
+                <p style="color: #4b5563; font-size: 16px;">
+                    Hi {user.full_name},
+                </p>
+                <p style="color: #4b5563; font-size: 16px;">
+                    We received a request to reset your password. Click the button below to create a new password:
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_url}" style="background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                        Reset Password
+                    </a>
+                </div>
+                <p style="color: #4b5563; font-size: 14px;">
+                    This link will expire in 1 hour for security reasons.
+                </p>
+                <p style="color: #4b5563; font-size: 14px;">
+                    If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                </p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+                <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                    © 2025 MDSRTech. All rights reserved.
+                </p>
+            </div>
+            '''
+        )
+        mail.send(msg)
+        print(f"Password reset email sent to {email}")
+        return jsonify({'message': 'Password reset email sent successfully'}), 200
+    except Exception as e:
+        print(f"Email sending error: {str(e)}")
+        return jsonify({'error': 'Failed to send email. Please try again later.'}), 500
 
 
 @auth_bp.route('/verify-reset-token', methods=['POST'])
@@ -635,44 +628,40 @@ def reset_password():
     
     db.session.commit()
     
-    # Send confirmation email in background thread
-    def send_password_changed_email_async(app, recipient_email, recipient_name):
-        with app.app_context():
-            try:
-                msg = Message(
-                    subject='Your MDSRTech Password Has Been Changed',
-                    recipients=[recipient_email],
-                    html=f'''
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <h1 style="color: #2563eb; text-align: center;">MDSRTech</h1>
-                        <h2 style="color: #1f2937;">Password Changed Successfully</h2>
-                        <p style="color: #4b5563; font-size: 16px;">
-                            Hi {recipient_name},
-                        </p>
-                        <p style="color: #4b5563; font-size: 16px;">
-                            Your password has been successfully changed. You can now log in with your new password.
-                        </p>
-                        <p style="color: #4b5563; font-size: 14px;">
-                            If you did not make this change, please contact us immediately.
-                        </p>
-                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-                        <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-                            © 2025 MDSRTech. All rights reserved.
-                        </p>
-                    </div>
-                    '''
-                )
-                mail.send(msg)
-                print(f"Password changed confirmation email sent to {recipient_email}")
-            except Exception as e:
-                print(f"Failed to send password changed email: {str(e)}")
+    # Skip confirmation email in production (Railway blocks SMTP)
+    if os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('SKIP_EMAILS'):
+        print(f"[PROD] Skipping password changed confirmation email to {user.email}")
+        return jsonify({'message': 'Password reset successfully'}), 200
     
-    # Start email in background thread
-    app = current_app._get_current_object()
-    thread = threading.Thread(
-        target=send_password_changed_email_async,
-        args=(app, user.email, user.full_name)
-    )
-    thread.start()
+    # Send confirmation email (local development only)
+    try:
+        msg = Message(
+            subject='Your MDSRTech Password Has Been Changed',
+            recipients=[user.email],
+            html=f'''
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h1 style="color: #2563eb; text-align: center;">MDSRTech</h1>
+                <h2 style="color: #1f2937;">Password Changed Successfully</h2>
+                <p style="color: #4b5563; font-size: 16px;">
+                    Hi {user.full_name},
+                </p>
+                <p style="color: #4b5563; font-size: 16px;">
+                    Your password has been successfully changed. You can now log in with your new password.
+                </p>
+                <p style="color: #4b5563; font-size: 14px;">
+                    If you did not make this change, please contact us immediately.
+                </p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+                <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                    © 2025 MDSRTech. All rights reserved.
+                </p>
+            </div>
+            '''
+        )
+        mail.send(msg)
+        print(f"Password changed confirmation email sent to {user.email}")
+    except Exception as e:
+        # Log but don't fail - password was already changed
+        print(f"Confirmation email error: {str(e)}")
     
     return jsonify({'message': 'Password reset successfully'}), 200

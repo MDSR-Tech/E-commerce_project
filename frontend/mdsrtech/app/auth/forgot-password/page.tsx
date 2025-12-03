@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +33,12 @@ export default function ForgotPasswordPage() {
       if (!response.ok) {
         setError(data.error || 'Failed to send reset email');
         setIsSubmitting(false);
+        return;
+      }
+
+      // If backend returns a redirect token (production mode), redirect directly
+      if (data.redirect_token) {
+        router.push(`/auth/reset-password?token=${data.redirect_token}`);
         return;
       }
 
