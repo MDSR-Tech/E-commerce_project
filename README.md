@@ -8,7 +8,7 @@ A full-stack e-commerce application built with **Next.js 15** (frontend) and **F
 
 ## Youtube Demo
 
-Link: **********
+Link: https://youtu.be/l_OPJ-HBudc
 
 ---
 
