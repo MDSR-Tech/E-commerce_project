@@ -70,7 +70,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       isOnSale: p.is_on_sale,
       salePercent: p.sale_percent || undefined,
       stock: p.stock,
-      image: p.image?.url || p.images?.[0]?.url || '/placeholder-product.jpg',
+      image: p.image?.url || '/placeholder-product.jpg',
     }));
   
   // Transform API product to component format with sale info
@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     isOnSale: product.is_on_sale,
     salePercent: product.sale_percent || undefined,
     stock: product.stock,
-    image: product.image?.url || product.images?.[0]?.url || '/placeholder-product.jpg',
+    image: product.image?.url || '/placeholder-product.jpg',
     description: product.description || 'No description available',
     brand: product.brand?.name,
     category: product.category?.name,
