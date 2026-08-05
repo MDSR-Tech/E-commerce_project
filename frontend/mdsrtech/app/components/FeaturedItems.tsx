@@ -28,7 +28,7 @@ export default async function FeaturedItems() {
     isOnSale: dbProduct.is_on_sale,
     salePercent: dbProduct.sale_percent || undefined,
     stock: dbProduct.stock,
-    image: dbProduct.image?.url || dbProduct.images?.[0]?.url || '/placeholder-product.jpg',
+    image: dbProduct.image?.url || '/placeholder-product.jpg',
   }));
 
   return (
