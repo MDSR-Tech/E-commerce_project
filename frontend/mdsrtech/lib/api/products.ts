@@ -1,8 +1,8 @@
 // Use internal URL for server-side requests (Docker container-to-container)
 // Fall back to public URL for client-side requests (browser)
 const API_BASE_URL = typeof window === 'undefined'
-  ? (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api')
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api');
+  ? (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api')
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api');
 
 export interface Product {
   id: number;
@@ -31,13 +31,6 @@ export interface Product {
     url: string;
     alt_text: string | null;
   } | null;
-  images: Array<{
-    url: string;
-    alt: string | null;
-    order: number;
-  }>;
-  created_at: string;
-  updated_at: string;
 }
 
 /**
@@ -46,7 +39,7 @@ export interface Product {
 export async function getAllProducts(): Promise<Product[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/products`, {
-      next: { revalidate: 300 } // Cache for 5 minutes
+      next: { revalidate: 180 } // Cache for 5 minutes
     });
     
     if (!response.ok) {
@@ -55,7 +48,7 @@ export async function getAllProducts(): Promise<Product[]> {
     }
     
     const data = await response.json();
-    return data.products || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];

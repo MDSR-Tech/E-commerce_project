@@ -7,7 +7,7 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import ProductCard from '../../components/ProductCard';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 interface Product {
   id: number;
@@ -61,6 +61,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
       setIsLoading(true);
       try {
         const response = await fetch(`${API_URL}/categories/${slug}/products`);
+        
         if (response.ok) {
           const data = await response.json();
           setProducts(data.products);

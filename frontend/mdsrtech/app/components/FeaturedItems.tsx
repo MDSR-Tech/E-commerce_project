@@ -34,7 +34,7 @@ export default async function FeaturedItems() {
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
-        {/* Section Header
+        {/* Section Header */}
         <div className="mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
             Featured Items
@@ -42,7 +42,7 @@ export default async function FeaturedItems() {
           <div className="w-24 h-1 bg-linear-to-r from-blue-600 to-purple-600 rounded-full"></div>
         </div>
 
-        {/* Product Grid
+        {/* Product Grid */}
         {products.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 text-lg">No products available at the moment.</p>
@@ -54,15 +54,14 @@ export default async function FeaturedItems() {
             ))}
           </div>
         )}
-        */}
 
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">Under maintenance</p>
-          <h2 className="mt-2 text-3xl md:text-4xl font-bold text-gray-900">We are rebuilding this section</h2>
-          <p className="mt-3 text-gray-700 text-lg">
-            Products will be back shortly. Thanks for your patience while we upgrade the site.
-          </p>
-        </div>
+        {/*<div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">*/}
+        {/*  <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">Under maintenance</p>*/}
+        {/*  <h2 className="mt-2 text-3xl md:text-4xl font-bold text-gray-900">We are rebuilding this section</h2>*/}
+        {/*  <p className="mt-3 text-gray-700 text-lg">*/}
+        {/*    Products will be back shortly. Thanks for your patience while we upgrade the site.*/}
+        {/*  </p>*/}
+        {/*</div>*/}
       </div>
     </section>
   );

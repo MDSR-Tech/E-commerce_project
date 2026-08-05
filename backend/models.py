@@ -25,8 +25,6 @@ class Category(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     name = db.Column(db.Text, unique=True, nullable=False)
     slug = db.Column(db.Text, unique=True, nullable=False)
-    parent_id = db.Column(db.BigInteger, db.ForeignKey('categories.id'))
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     # Sale field for category-wide sales
     sale_percent = db.Column(db.Integer, nullable=True)  # e.g., 40 for 40% off
     
@@ -37,7 +35,6 @@ class Brand(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     name = db.Column(db.Text, unique=True, nullable=False)
     slug = db.Column(db.Text, unique=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     
     products = db.relationship('Product', back_populates='brand')
 
@@ -53,10 +50,6 @@ class Product(db.Model):
     currency = db.Column(db.String(3), nullable=False, default='CAD')
     stock = db.Column(db.Integer, nullable=False, default=0)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
-    created_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
-    updated_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     # Product-specific sale (overrides category sale if set)
     sale_percent = db.Column(db.Integer, nullable=True)  # e.g., 25 for 25% off
     
@@ -98,9 +91,6 @@ class ProductImage(db.Model):
     product_id = db.Column(db.BigInteger, db.ForeignKey('products.id'), nullable=False)
     url = db.Column(db.Text, nullable=False)  # Changed from image_url to url
     alt_text = db.Column(db.Text)
-    position = db.Column(db.Integer, nullable=False, default=0)  # Changed from display_order to position
-    is_primary = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     
     product = db.relationship('Product', back_populates='images')
 
@@ -133,7 +123,6 @@ class WishlistItem(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     wishlist_id = db.Column(db.BigInteger, db.ForeignKey('wishlists.id'), nullable=False)
     product_id = db.Column(db.BigInteger, db.ForeignKey('products.id'), nullable=False)
-    added_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     
     wishlist = db.relationship('Wishlist', back_populates='items')
     product = db.relationship('Product')
@@ -142,7 +131,6 @@ class Cart(db.Model):
     __tablename__ = 'carts'
     id = db.Column(db.BigInteger, primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     
     user = db.relationship('User', back_populates='carts')
     items = db.relationship('CartItem', back_populates='cart', order_by='CartItem.added_at')
@@ -180,8 +168,6 @@ class Order(db.Model):
     total_cents = db.Column(db.Integer, nullable=False)
     currency = db.Column(db.String(3), nullable=False, default='CAD')
     payment_id = db.Column(db.BigInteger, db.ForeignKey('payments.id'))
-    shipping_address_id = db.Column(db.BigInteger, db.ForeignKey('addresses.id'))
-    billing_address_id = db.Column(db.BigInteger, db.ForeignKey('addresses.id'))
     placed_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     

@@ -1,0 +1,18 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+
+### Get all products
+GET localhost:8080/api/products
+
+### Get single product by ID
+GET localhost:8080/api/products/4
+
+### Get single product by slug
+GET localhost:8080/api/products/slug/ipad-air-m2
+
+### GET produts by category
+GET localhost:8080/api/categories/laptops/products
+
+### GET products by search query
+GET localhost:8080/api/search?q=phone
