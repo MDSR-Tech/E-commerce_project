@@ -1,4 +1,4 @@
-package com.mdsrtech.backend.controllers.auth;
+package com.mdsrtech.backend.controllers;
 
 import com.mdsrtech.backend.domain.dtos.customresponses.auth.AuthResponseDTO;
 import com.mdsrtech.backend.domain.dtos.customresponses.auth.LoginRequestDTO;
@@ -7,7 +7,6 @@ import com.mdsrtech.backend.domain.dtos.customresponses.auth.RegisterRequestDTO;
 import com.mdsrtech.backend.domain.dtos.entities.UserDTO;
 import com.mdsrtech.backend.services.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
