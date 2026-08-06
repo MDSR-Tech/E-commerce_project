@@ -13,6 +13,7 @@ import com.mdsrtech.backend.repositories.BrandRepository;
 import com.mdsrtech.backend.repositories.CategoryRepository;
 import com.mdsrtech.backend.repositories.ProductRepository;
 import com.mdsrtech.backend.services.ProductService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -20,19 +21,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
     private final Mapper<Product, ProductDTO> productMapper;
-
-    public ProductServiceImpl(ProductRepository productRepository, BrandRepository brandRepository, CategoryRepository categoryRepository, Mapper<Product, ProductDTO> productMapper) {
-        this.productRepository = productRepository;
-        this.brandRepository = brandRepository;
-        this.categoryRepository = categoryRepository;
-        this.productMapper = productMapper;
-    }
 
     @Override
     public List<Product> getAllProducts() {
