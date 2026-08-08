@@ -1,4 +1,4 @@
-package com.mdsrtech.backend.domain.dtos.customresponses.wishlists;
+package com.mdsrtech.backend.domain.dtos.customresponses.cart;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RemoveItemFromWishListDTO {
+public class UpdateItemResponseDTO {
 
     private String message;
     private Long productId;
-
+    private Integer quantity;
 
 }

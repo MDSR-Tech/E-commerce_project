@@ -3,6 +3,7 @@ package com.mdsrtech.backend.domain.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,9 +26,10 @@ public class Cart {
     private User user;
 
     // Relationships
+    @Builder.Default
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("addedAt DESC")  // Orders items by the time they were added, newest first
-    private List<CartItem> cartItems;
+    private List<CartItem> cartItems = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

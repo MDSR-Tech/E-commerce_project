@@ -1,4 +1,4 @@
-package com.mdsrtech.backend.domain.dtos.customresponses.wishlists;
+package com.mdsrtech.backend.domain.dtos.customresponses.wishlist;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

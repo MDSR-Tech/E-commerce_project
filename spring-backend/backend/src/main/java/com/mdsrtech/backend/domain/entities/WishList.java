@@ -3,6 +3,7 @@ package com.mdsrtech.backend.domain.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,8 +26,9 @@ public class WishList {
     private User user;
 
     // Relationship
+    @Builder.Default
     @OneToMany(mappedBy = "wishlist", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WishListItem> wishlistItems;
+    private List<WishListItem> wishlistItems = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

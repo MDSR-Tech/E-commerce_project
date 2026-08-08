@@ -1,7 +1,7 @@
 package com.mdsrtech.backend.services.impl;
 
 import com.mdsrtech.backend.config.security.JwtService;
-import com.mdsrtech.backend.domain.dtos.customresponses.wishlists.*;
+import com.mdsrtech.backend.domain.dtos.customresponses.wishlist.*;
 import com.mdsrtech.backend.domain.dtos.entities.ProductDTO;
 import com.mdsrtech.backend.domain.entities.Product;
 import com.mdsrtech.backend.domain.entities.User;
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -111,7 +110,7 @@ public class WishListServiceImpl implements WishListService {
 
         WishList wishlist = getOrCreateWishList(user);
 
-        Optional<WishListItem> exists = wishListItemRepository.findByWishListIdAndProductId(
+        Optional<WishListItem> exists = wishListItemRepository.findByWishlistIdAndProductId(
                 wishlist.getId(),
                 request.getProductId()
         );
@@ -150,7 +149,7 @@ public class WishListServiceImpl implements WishListService {
 
         WishList wishlist = wishListRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Wishlist not found"));;
-        WishListItem item = wishListItemRepository.findByWishListIdAndProductId(wishlist.getId(), request.getProductId())
+        WishListItem item = wishListItemRepository.findByWishlistIdAndProductId(wishlist.getId(), request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not in wishlist"));
         wishListItemRepository.delete(item);
 
@@ -174,7 +173,7 @@ public class WishListServiceImpl implements WishListService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         WishList wishlist = getOrCreateWishList(user);
 
-        Optional<WishListItem> itemExists = wishListItemRepository.findByWishListIdAndProductId(wishlist.getId(), request.getProductId());
+        Optional<WishListItem> itemExists = wishListItemRepository.findByWishlistIdAndProductId(wishlist.getId(), request.getProductId());
 
         if (itemExists.isPresent()) {
             wishListItemRepository.delete(itemExists.get());
@@ -213,7 +212,7 @@ public class WishListServiceImpl implements WishListService {
             return InWishListResponseDTO.builder().inWishlist(false).build();
         }
 
-        boolean exists = wishListItemRepository.findByWishListIdAndProductId(
+        boolean exists = wishListItemRepository.findByWishlistIdAndProductId(
                 wishlist.get().getId(),
                 productId
         ).isPresent();

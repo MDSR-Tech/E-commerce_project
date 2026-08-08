@@ -1,4 +1,4 @@
-package com.mdsrtech.backend.domain.dtos.customresponses.wishlists;
+package com.mdsrtech.backend.domain.dtos.customresponses.wishlist;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InWishListResponseDTO {
+public class ProductIdRequestDTO {
 
-    private boolean inWishlist;
+    private Long productId;
+
 
 }

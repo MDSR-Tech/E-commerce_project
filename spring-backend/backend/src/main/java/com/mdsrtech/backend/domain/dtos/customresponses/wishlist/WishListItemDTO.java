@@ -1,12 +1,10 @@
-package com.mdsrtech.backend.domain.dtos.customresponses.wishlists;
+package com.mdsrtech.backend.domain.dtos.customresponses.wishlist;
 
 import com.mdsrtech.backend.domain.dtos.entities.ProductDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 
 @Data

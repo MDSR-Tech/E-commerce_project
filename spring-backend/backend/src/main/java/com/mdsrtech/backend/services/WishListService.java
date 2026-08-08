@@ -1,11 +1,8 @@
 package com.mdsrtech.backend.services;
 
-import com.mdsrtech.backend.domain.dtos.customresponses.wishlists.*;
+import com.mdsrtech.backend.domain.dtos.customresponses.wishlist.*;
 import com.mdsrtech.backend.domain.entities.User;
 import com.mdsrtech.backend.domain.entities.WishList;
-
-import java.util.Map;
-import java.util.UUID;
 
 public interface WishListService {
 

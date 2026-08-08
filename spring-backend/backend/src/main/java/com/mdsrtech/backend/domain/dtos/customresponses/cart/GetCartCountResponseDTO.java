@@ -1,4 +1,4 @@
-package com.mdsrtech.backend.domain.dtos.customresponses.wishlists;
+package com.mdsrtech.backend.domain.dtos.customresponses.cart;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductIdRequestDTO {
+public class GetCartCountResponseDTO {
 
-    private Long productId;
-
+    private Integer count;
+    private Integer totalItems;
 
 }
