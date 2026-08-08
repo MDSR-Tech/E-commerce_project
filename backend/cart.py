@@ -305,7 +305,7 @@ def clear_cart():
     if not cart:
         return jsonify({'message': 'Cart already empty'}), 200
     
-    
+    CartItem.query.filter_by(cart_id=cart.id).delete()
     db.session.commit()
     
     return jsonify({'message': 'Cart cleared'}), 200
