@@ -13,7 +13,7 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrdersListResponseDTO {
+public class OrderListItemDTO {
 
     private Long id;
     private Integer totalCents;

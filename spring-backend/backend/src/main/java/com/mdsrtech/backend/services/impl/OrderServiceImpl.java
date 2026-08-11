@@ -3,13 +3,15 @@ package com.mdsrtech.backend.services.impl;
 import com.mdsrtech.backend.domain.dtos.customresponses.orders.CancelOrderResponseDTO;
 import com.mdsrtech.backend.domain.dtos.customresponses.orders.GetAllOrdersResponseDTO;
 import com.mdsrtech.backend.domain.dtos.customresponses.orders.GetOrderDetailsResponseDTO;
+import com.mdsrtech.backend.domain.dtos.customresponses.orders.OrderListItemDTO;
+import com.mdsrtech.backend.domain.dtos.entities.OrderItemDTO;
 import com.mdsrtech.backend.domain.entities.Order;
 import com.mdsrtech.backend.domain.entities.OrderItem;
 import com.mdsrtech.backend.domain.entities.User;
+import com.mdsrtech.backend.repositories.OrderItemRepository;
 import com.mdsrtech.backend.repositories.OrderRepository;
 import com.mdsrtech.backend.repositories.UserRepository;
 import com.mdsrtech.backend.services.OrderService;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -44,19 +46,90 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    @Transactional
     @Override
     public GetAllOrdersResponseDTO getAllOrders(String email) {
 
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         List<Order> orders = orderRepository.findAllByUserIdOrderByPlacedAtDesc(user.getId());
 
-        List<>
+        List<OrderListItemDTO> ordersList = orders.stream().map(order -> {
+            List<OrderItem> orderItems = order.getOrderItems();
+            OrderItem firstItem = orderItems.isEmpty() ? null : orderItems.getFirst();
+
+            String previewImage;
+            if (firstItem != null && firstItem.getProduct() != null && firstItem.getProduct().getProductImage() != null) {
+                previewImage = firstItem.getProduct().getProductImage().getUrl();
+
+            } else {
+                previewImage = null;
+            }
+
+            return OrderListItemDTO.builder()
+                    .id(order.getId())
+                    .totalCents(order.getTotalCents())
+                    .subtotalCents(order.getSubtotalCents())
+                    .taxCents(order.getTaxCents())
+                    .shippingCents(order.getShippingCents())
+                    .currency(order.getCurrency())
+                    .placedAt(order.getPlacedAt())
+                    .itemCount(orderItems.size())
+                    .previewImage(previewImage)
+                    .firstItemName(firstItem != null ? firstItem.getTitleSnapshot() : null)
+                    .build();
+
+        }).toList();
+
+        return GetAllOrdersResponseDTO.builder().orders(ordersList).build();
 
     }
 
+    @Transactional
     @Override
-    public GetOrderDetailsResponseDTO getOrderDetails(String email) {
-        return null;
+    public GetOrderDetailsResponseDTO getOrderDetails(String email, Long orderId) {
+
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        Order order = orderRepository.findByIdAndUserId(orderId, user.getId()).orElseThrow(() -> new RuntimeException("Order not found"));
+
+        List<OrderItemDTO> items = order.getOrderItems().stream().map(orderItem -> {
+
+            String productImage;
+            String productSlug;
+
+            Long productId = orderItem.getProduct() != null ? orderItem.getProduct().getId() : null;
+            if (orderItem.getProduct() != null && orderItem.getProduct().getProductImage() != null) {
+                productImage = orderItem.getProduct().getProductImage().getUrl();
+                productSlug = orderItem.getProduct().getSlug();
+            }
+            else {
+                productImage = null;
+                productSlug = null;
+            }
+
+            return OrderItemDTO.builder()
+                    .id(orderItem.getId())
+                    .productId(productId)
+                    .title(orderItem.getTitleSnapshot())
+                    .quantity(orderItem.getQuantity())
+                    .unitPriceCents(orderItem.getUnitPriceCents())
+                    .lineTotalCents(orderItem.getLineTotalCents())
+                    .imageUrl(productImage)
+                    .productSlug(productSlug)
+                    .build();
+
+        }).toList();
+
+        return GetOrderDetailsResponseDTO.builder()
+                .id(orderId)
+                .subtotalCents(order.getSubtotalCents())
+                .taxCents(order.getTaxCents())
+                .shippingCents(order.getShippingCents())
+                .totalCents(order.getTotalCents())
+                .currency(order.getCurrency())
+                .placedAt(order.getPlacedAt())
+                .items(items)
+                .build();
+
     }
 
     @Transactional

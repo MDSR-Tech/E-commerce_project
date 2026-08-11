@@ -15,6 +15,6 @@ import java.util.List;
 @AllArgsConstructor
 public class GetAllOrdersResponseDTO {
 
-    private List<Order> orders;
+    private List<OrderListItemDTO> orders;
 
 }

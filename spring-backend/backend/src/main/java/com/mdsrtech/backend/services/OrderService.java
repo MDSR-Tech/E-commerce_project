@@ -11,7 +11,7 @@ public interface OrderService {
 
     public void sendOrderCancellationEmail(User user, Order order);
     public GetAllOrdersResponseDTO getAllOrders(String email);
-    public GetOrderDetailsResponseDTO getOrderDetails(String email);
+    public GetOrderDetailsResponseDTO getOrderDetails(String email, Long orderId);
     public CancelOrderResponseDTO cancelOrder(String email, Long orderId);
 
 }
