@@ -18,8 +18,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (email: string, fullName: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  loginWithGoogle: () => Promise<void>;
-  loginWithGithub: () => Promise<void>;
+  loginWithGoogle: () => void;
+  loginWithGithub: () => void;
   checkAuth: () => Promise<void>;
 }
 
