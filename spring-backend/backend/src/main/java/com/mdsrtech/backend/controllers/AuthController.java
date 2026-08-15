@@ -1,9 +1,7 @@
 package com.mdsrtech.backend.controllers;
 
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.AuthResponseDTO;
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.LoginRequestDTO;
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.RefreshResponseDTO;
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.RegisterRequestDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mdsrtech.backend.domain.dtos.customresponses.auth.*;
 import com.mdsrtech.backend.domain.dtos.entities.UserDTO;
 import com.mdsrtech.backend.services.AuthService;
 import jakarta.validation.Valid;
@@ -49,6 +47,21 @@ public class AuthController {
     @PostMapping(path = "/logout")
     public ResponseEntity<String> logout() {
         return ResponseEntity.ok(authService.logout());
+    }
+
+    @PostMapping(path = "/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody EmailRequestDTO emailRequestDTO) {
+        return ResponseEntity.ok(authService.forgotPassword(emailRequestDTO.getEmail()));
+    }
+
+    @PostMapping(path = "/verify-reset-token")
+    public ResponseEntity<VerifyResetDTO> verifyResetToken(@RequestBody TokenRequestDTO tokenRequestDTO) {
+        return ResponseEntity.ok(authService.verifyResetToken(tokenRequestDTO.getToken()));
+    }
+
+    @PostMapping(path = "/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequestDTO resetPasswordRequestDTO) {
+        return ResponseEntity.ok(authService.resetPassword(resetPasswordRequestDTO.getToken(), resetPasswordRequestDTO.getPassword()));
     }
 
 }

@@ -3,6 +3,8 @@ package com.mdsrtech.backend.domain.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -23,6 +25,7 @@ public class PasswordResetToken {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(name = "token",  nullable = false,  unique = true)
@@ -31,7 +34,8 @@ public class PasswordResetToken {
     @Column(name = "expires_at",  nullable = false)
     private Instant expiresAt;
 
-    @Column(name = "used")
+    @Builder.Default
+    @Column(name = "used", nullable = false)
     private Boolean used = false;
 
     @CreationTimestamp

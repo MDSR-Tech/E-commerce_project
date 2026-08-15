@@ -1,10 +1,9 @@
 package com.mdsrtech.backend.services;
 
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.AuthResponseDTO;
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.LoginRequestDTO;
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.RefreshResponseDTO;
-import com.mdsrtech.backend.domain.dtos.customresponses.auth.RegisterRequestDTO;
+import com.mdsrtech.backend.domain.dtos.customresponses.auth.*;
 import com.mdsrtech.backend.domain.dtos.entities.UserDTO;
+
+import java.util.Map;
 
 public interface AuthService {
 
@@ -16,8 +15,11 @@ public interface AuthService {
     RefreshResponseDTO refresh(String refreshToken);
     // GET /api/auth/me
     UserDTO getCurrentUser(String email);
-
     // POST /api/auth/logout
     String logout();
+
+    Map<String, String> forgotPassword(String email);
+    VerifyResetDTO verifyResetToken(String token);
+    Map<String, String> resetPassword(String token, String newPassword);
 
 }

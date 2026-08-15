@@ -181,36 +181,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearTokens();
   };
 
-  const loginWithGoogle = async () => {
-    try {
-      const response = await fetch(`${API_URL}/auth/google`);
-      const data = await response.json();
-      
-      if (data.auth_url) {
-        // Redirect to Google OAuth
-        window.location.href = data.auth_url;
-      } else {
-        console.error('Google OAuth not configured');
-      }
-    } catch (error) {
-      console.error('Google login error:', error);
-    }
+  // Flask/Python backend version (fetch JSON auth_url, then redirect):
+  // const loginWithGoogle = async () => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/auth/google`);
+  //     const data = await response.json();
+  //
+  //     if (data.auth_url) {
+  //       window.location.href = data.auth_url;
+  //     } else {
+  //       console.error('Google OAuth not configured');
+  //     }
+  //   } catch (error) {
+  //     console.error('Google login error:', error);
+  //   }
+  // };
+  //
+  // const loginWithGithub = async () => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/auth/github`);
+  //     const data = await response.json();
+  //
+  //     if (data.auth_url) {
+  //       window.location.href = data.auth_url;
+  //     } else {
+  //       console.error('GitHub OAuth not configured');
+  //     }
+  //   } catch (error) {
+  //     console.error('GitHub login error:', error);
+  //   }
+  // };
+
+  // Spring backend version — Spring Security auto-generates these OAuth2 entry points
+  // at the application root (not under /api), so the frontend just navigates directly
+  // instead of fetching a JSON auth_url first.
+  const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
+
+  const loginWithGoogle = () => {
+    window.location.href = `${API_ORIGIN}/oauth2/authorization/google`;
   };
 
-  const loginWithGithub = async () => {
-    try {
-      const response = await fetch(`${API_URL}/auth/github`);
-      const data = await response.json();
-      
-      if (data.auth_url) {
-        // Redirect to GitHub OAuth
-        window.location.href = data.auth_url;
-      } else {
-        console.error('GitHub OAuth not configured');
-      }
-    } catch (error) {
-      console.error('GitHub login error:', error);
-    }
+  const loginWithGithub = () => {
+    window.location.href = `${API_ORIGIN}/oauth2/authorization/github`;
   };
 
   return (

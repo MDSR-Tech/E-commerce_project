@@ -19,6 +19,8 @@ public class SecurityConfiguration {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final GitHubOAuth2UserService gitHubOAuth2UserService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,18 +35,20 @@ public class SecurityConfiguration {
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/auth/refresh",
-                                "/api/auth/google",
-                                "/api/auth/google/callback",
-                                "/api/auth/github",
-                                "/api/auth/github/callback",
                                 "/api/auth/forgot-password",
                                 "/api/auth/verify-reset-token",
-                                "/api/auth/reset-password")
+                                "/api/auth/reset-password",
+                                "/oauth2/**",
+                                "/login/oauth2/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .userInfoEndpoint(userInfo -> userInfo.userService(gitHubOAuth2UserService)));
 
         return http.build();
     }

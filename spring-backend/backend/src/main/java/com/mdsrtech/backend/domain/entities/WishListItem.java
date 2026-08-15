@@ -2,6 +2,9 @@ package com.mdsrtech.backend.domain.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.util.Objects;
 
 @Entity
@@ -20,6 +23,7 @@ public class WishListItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wishlist_id", referencedColumnName = "id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private WishList wishlist;
 
     @ManyToOne(fetch = FetchType.LAZY)
