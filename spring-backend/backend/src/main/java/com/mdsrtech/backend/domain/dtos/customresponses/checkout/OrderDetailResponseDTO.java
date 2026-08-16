@@ -10,9 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateCheckoutResponseDTO {
+public class OrderDetailResponseDTO {
 
-    private String checkoutUrl;
-    private String sessionId;
+    private Boolean success;
+    private Long orderId;
+    private Boolean alreadyProcessed;
 
 }

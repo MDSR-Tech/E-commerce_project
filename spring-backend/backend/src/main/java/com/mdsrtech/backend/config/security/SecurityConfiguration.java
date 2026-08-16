@@ -39,7 +39,8 @@ public class SecurityConfiguration {
                                 "/api/auth/verify-reset-token",
                                 "/api/auth/reset-password",
                                 "/oauth2/**",
-                                "/login/oauth2/**")
+                                "/login/oauth2/**",
+                                "/api/checkout/webhook")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session

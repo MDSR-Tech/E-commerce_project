@@ -29,8 +29,10 @@ public class Payment {
     @Column(name = "provider_payment_id", columnDefinition = "TEXT", nullable = false, unique = true)
     private String providerPaymentId;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", length = 50, nullable = false)
-    private String status = "succeeded";
+    private PaymentStatus status = PaymentStatus.succeeded;
 
     @Column(name = "amount_cents", nullable = false)
     private Integer amountCents;

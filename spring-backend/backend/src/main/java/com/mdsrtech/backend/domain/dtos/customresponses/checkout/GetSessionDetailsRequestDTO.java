@@ -10,9 +10,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateCheckoutResponseDTO {
+public class GetSessionDetailsRequestDTO {
 
-    private String checkoutUrl;
     private String sessionId;
 
 }
