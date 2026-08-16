@@ -5,8 +5,6 @@ WORKDIR /app
 
 # Copy pom.xml first so dependencies are cached unless pom.xml changes
 COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
 RUN mvn dependency:go-offline -B
 
 # Copy the rest of the app and build
