@@ -1,23 +1,20 @@
 version: '3.8'
 
 services:
-  # Flask Backend
+  # Spring Boot Backend
   backend:
     build:
-      context: ./backend
+      context: ./spring-backend/backend
       dockerfile: Dockerfile.dev
     ports:
-      - "5000:5000"
+      - "8080:8080"
     env_file:
-      - ./backend/.env
+      - ./spring-backend/backend/.env
     environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
       - FRONTEND_URL=http://localhost:3000
-      - GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
-      - GITHUB_REDIRECT_URI=http://localhost:5000/api/auth/github/callback
     volumes:
-      - ./backend:/app
+      - ./spring-backend/backend:/app
+      - ~/.m2:/root/.m2
     networks:
       - ecommerce-network
 
@@ -29,11 +26,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
-      - INTERNAL_API_URL=http://backend:5000/api
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+      - INTERNAL_API_URL=http://backend:8080/api
       - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
     env_file:
-      - ./backend/.env
+      - ./spring-backend/backend/.env
     volumes:
       - ./frontend/mdsrtech:/app
       - /app/node_modules

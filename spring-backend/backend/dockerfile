@@ -1,0 +1,27 @@
+# Build stage
+FROM maven:3.9-eclipse-temurin-21 AS build
+
+WORKDIR /app
+
+# Copy pom.xml first so dependencies are cached unless pom.xml changes
+COPY pom.xml .
+COPY mvnw .
+COPY .mvn .mvn
+RUN mvn dependency:go-offline -B
+
+# Copy the rest of the app and build
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+# Run stage
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose the port (Railway/Render use PORT env variable)
+EXPOSE 8080
+
+# Run the Spring Boot jar - use PORT env variable with fallback, matching gunicorn's --bind behavior
+CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
